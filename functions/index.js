@@ -10,19 +10,19 @@ exports.sendFuelSMS = functions.firestore
 
     const data = snap.data();
 
-    const driver = await admin.firestore()
+    const driverDoc = await admin.firestore()
       .collection("drivers")
       .doc(data.driverId)
       .get();
 
-    const phone = driver.data().phone;
+    const driver = driverDoc.data();
 
     const message = `Pakisa Fuel
 Code: ${data.code}
 Amt: R${data.amountApproved}
 Valid: Today`;
 
-    await fetch("https://YOUR-INFObip-URL/sms/2/text/advanced", {
+    await fetch("https://YOUR_INFOBIP_URL/sms/2/text/advanced", {
       method: "POST",
       headers: {
         "Authorization": "App YOUR_API_KEY",
@@ -31,7 +31,7 @@ Valid: Today`;
       body: JSON.stringify({
         messages: [{
           from: "Pakisa",
-          destinations: [{ to: phone }],
+          destinations: [{ to: driver.phone }],
           text: message
         }]
       })
