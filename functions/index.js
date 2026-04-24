@@ -6,7 +6,7 @@ admin.initializeApp();
 
 const INFOBIP_KEY = functions.config().infobip.key;
 
-exports.sendFuelSMS = functions.firestore
+exports.sendSMSVoucher = functions.firestore
   .document("fuel_vouchers/{id}")
   .onCreate(async (snap) => {
 
