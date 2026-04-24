@@ -4,6 +4,8 @@ const fetch = require("node-fetch");
 
 admin.initializeApp();
 
+const INFOBIP_KEY = functions.config().infobip.key;
+
 exports.sendFuelSMS = functions.firestore
   .document("fuel_vouchers/{id}")
   .onCreate(async (snap) => {
@@ -17,25 +19,39 @@ exports.sendFuelSMS = functions.firestore
 
     const driver = driverDoc.data();
 
+    if (!driver || !driver.phone) {
+      console.log("No phone number found");
+      return null;
+    }
+
     const message = `Pakisa Fuel
 Code: ${data.code}
 Amt: R${data.amountApproved}
 Valid: Today`;
 
-    await fetch("https://YOUR_INFOBIP_URL/sms/2/text/advanced", {
-      method: "POST",
-      headers: {
-        "Authorization": "App YOUR_API_KEY",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        messages: [{
-          from: "Pakisa",
-          destinations: [{ to: driver.phone }],
-          text: message
-        }]
-      })
-    });
+    try {
+      const res = await fetch("https://2yxk3p.api.infobip.com/sms/2/text/advanced", {
+        method: "POST",
+        headers: {
+          "Authorization": `App ${INFOBIP_KEY}`,
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          messages: [{
+            from: "Pakisa",
+            destinations: [{ to: driver.phone }],
+            text: message
+          }]
+        })
+      });
+
+      const result = await res.json();
+      console.log("SMS response:", result);
+
+    } catch (err) {
+      console.error("SMS ERROR:", err);
+    }
 
     return null;
   });
