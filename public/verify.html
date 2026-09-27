@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GP Fuels - Attendant Verification Portal</title>
+  <style>
+    body {
+      background-color: #ffffff;
+      font-family: Arial, sans-serif;
+      color: #333333;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid #cccccc;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      background: #ffffff;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #1b365d;
+      padding-bottom: 15px;
+    }
+
+    .header img {
+      height: 50px;
+      object-fit: contain;
+    }
+
+    .header h2 {
+      margin: 10px 0 0 0;
+      color: #1b365d;
+      font-size: 18px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    input[type="text"], input[type="password"], input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      border-radius: 4px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background-color: #1b365d;
+      color: white;
+      border: none;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+
+    .btn:hover {
+      background-color: #2c4d7d;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    .btn-danger {
+      background-color: #dc3545;
+    }
+    .btn-danger:hover {
+      background-color: #bd2130;
+    }
+
+    .output-box {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 4px;
+      font-size: 13px;
+      min-height: 50px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .flex-row {
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- HEADER & LOGO -->
+  <div class="header">
+    <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1790504228/images-removebg-preview_paexe9.png" alt="Pakisa Logo">
+    <h2>GP FUELS DEPOT VERIFICATION</h2>
+  </div>
+
+  <!-- LOGIN SECTION (Attendant Access) -->
+  <div id="login-section">
+    <div class="form-group">
+      <label>Attendant / Depot PIN Code:</label>
+      <input type="password" id="attendantPin" placeholder="Enter station login PIN">
+    </div>
+    <button class="btn" onclick="attendantLogin()">Login to Terminal</button>
+  </div>
+
+  <!-- VERIFICATION DASHBOARD (Hidden until logged in) -->
+  <div id="dashboard-section" class="hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <span style="font-size: 12px; color: #28a745; font-weight: bold;">● Terminal Active</span>
+      <div>
+        <button class="btn btn-secondary" style="width: auto; padding: 5px 10px; font-size: 11px;" onclick="refreshTerminal()">Refresh</button>
+        <button class="btn btn-danger" style="width: auto; padding: 5px 10px; font-size: 11px;" onclick="attendantLogout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Enter Driver Voucher Code:</label>
+      <input type="text" id="voucherPin" placeholder="PKS-DDMM-XXXXX" style="text-transform: uppercase;">
+    </div>
+    <button class="btn" onclick="verifyVoucherCode()">Verify Voucher</button>
+
+    <div id="verify-output" class="output-box">
+      Awaiting voucher input...
+    </div>
+
+    <!-- SLIP UPLOAD CONTAINER -->
+    <div id="slip-section" class="hidden" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px;">
+      <div class="form-group">
+        <label>Capture GP Fuels Paper Slip:</label>
+        <input type="file" id="slipPhoto" accept="image/*" capture="environment">
+      </div>
+      <button class="btn" style="background-color: #28a745;" onclick="completeRedemption()">Submit Slip & Complete Fueling</button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, getDocs, query, where, updateDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+  const firebaseConfig = {
+    apiKey: "YOUR_KEY",
+    authDomain: "fuel-management-system-7784c.firebaseapp.com",
+    projectId: "fuel-management-system-7784c"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  let activeVoucherDocId = null;
+
+  // Simple hardcoded or session-based attendant login pin for the pilot (e.g. 2026)
+  window.attendantLogin = function() {
+    const pin = document.getElementById("attendantPin").value;
+    if(pin === "2026" || pin === "GPFUELS") {
+      sessionStorage.setItem("gp_logged_in", "true");
+      document.getElementById("login-section").classList.add("hidden");
+      document.getElementById("dashboard-section").classList.remove("hidden");
+    } else {
+      alert("Invalid Depot Login PIN!");
+    }
+  }
+
+  window.attendantLogout = function() {
+    sessionStorage.removeItem("gp_logged_in");
+    document.getElementById("dashboard-section").classList.add("hidden");
+    document.getElementById("login-section").classList.remove("hidden");
+    document.getElementById("attendantPin").value = "";
+    refreshTerminal();
+  }
+
+  window.refreshTerminal = function() {
+    document.getElementById("voucherPin").value = "";
+    document.getElementById("verify-output").innerHTML = "Terminal refreshed. Awaiting voucher input...";
+    document.getElementById("slip-section").classList.add("hidden");
+    activeVoucherDocId = null;
+  }
+
+  window.verifyVoucherCode = async function() {
+    const pin = document.getElementById("voucherPin").value.trim().toUpperCase();
+    const output = document.getElementById("verify-output");
+    
+    if(!pin) {
+      alert("Please enter a voucher PIN code.");
+      return;
+    }
+
+    output.innerHTML = "Checking database...";
+
+    try {
+      const q = query(collection(db, "fuel_vouchers"), where("code", "==", pin));
+      const snapshot = await getDocs(q);
+
+      if(snapshot.empty) {
+        output.innerHTML = `<span style="color:red; font-weight:bold;">INVALID: Voucher code not found.</span>`;
+        document.getElementById("slip-section").classList.add("hidden");
+        return;
+      }
+
+      const voucherDoc = snapshot.docs[0];
+      activeVoucherDocId = voucherDoc.id;
+      const data = voucherDoc.data();
+
+      if(data.status === "APPROVED") {
+        output.innerHTML = `<span style="color:green; font-weight:bold;">VALID - PUMP AUTHORIZED</span><br>
+          <b>Amount:</b> R${data.amountApproved}<br>
+          <b>Vehicle:</b> ${data.vehicleId}<br>
+          <b>Status:</b> Approved`;
+        document.getElementById("slip-section").classList.remove("hidden");
+      } else if(data.status === "COMPLETED") {
+        output.innerHTML = `<span style="color:orange; font-weight:bold;">ALREADY REDEEMED</span><br>This voucher was already used and closed.`;
+        document.getElementById("slip-section").classList.add("hidden");
+      } else {
+        output.innerHTML = `<span style="color:red; font-weight:bold;">LOCKED / PENDING</span><br>
+          <b>Reason:</b> ${data.flags ? data.flags.join(", ") : "Requires Super User clearance."}<br><i>Do not pump fuel until approved.</i>`;
+        document.getElementById("slip-section").classList.add("hidden");
+      }
+
+    } catch (err) {
+      console.error(err);
+      output.innerHTML = `<span style="color:red;">Error connecting to database. Try again.</span>`;
+    }
+  }
+
+  window.completeRedemption = async function() {
+    const fileInput = document.getElementById("slipPhoto");
+    if(fileInput.files.length === 0) {
+      alert("Please snap/upload a photo of the physical GP Fuels paper slip!");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const output = document.getElementById("verify-output");
+    output.innerHTML = "Uploading slip photo to system...";
+
+    try {
+      const storageRef = ref(storage, `slips/${activeVoucherDocId}_${Date.now()}`);
+      await uploadBytes(storageRef, file);
+      const slipUrl = await getDownloadURL(storageRef);
+
+      await updateDoc(doc(db, "fuel_vouchers", activeVoucherDocId), {
+        status: "COMPLETED",
+        slipUrl: slipUrl,
+        redeemedAt: Timestamp.now()
+      });
+
+      alert("Success! Slip uploaded and voucher marked as completed.");
+      refreshTerminal();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload slip. Please check your connection.");
+    }
+  }
+
+  // Check session persistence on load
+  window.onload = function() {
+    if(sessionStorage.getItem("gp_logged_in") === "true") {
+      document.getElementById("login-section").classList.add("hidden");
+      document.getElementById("dashboard-section").classList.remove("hidden");
+    }
+  }
+</script>
+
+</body>
+</html>
