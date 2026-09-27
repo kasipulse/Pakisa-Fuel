@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pakisa Fuel - Manager Approval</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1b365d">
+  <style>
+    :root {
+      --win98-gray: #c0c0c0;
+      --win98-dark-gray: #808080;
+      --win98-light-gray: #dfdfdf;
+      --win98-blue: #000080;
+      --win98-blue-highlight: #1084d0;
+      --pakisa-blue: #1b365d;
+      --pakisa-white: #ffffff;
+    }
+
+    body {
+      background-color: var(--win98-gray);
+      font-family: "MS Sans Serif", Arial, Tahoma, sans-serif;
+      font-size: 14px;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .window {
+      background-color: var(--win98-gray);
+      width: 100%;
+      max-width: 420px;
+      border-top: 2px solid var(--win98-white);
+      border-left: 2px solid var(--win98-white);
+      border-right: 2px solid var(--win98-dark-gray);
+      border-bottom: 2px solid var(--win98-dark-gray);
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+      margin-top: 10px;
+    }
+
+    .title-bar {
+      background: linear-gradient(90deg, var(--win98-blue), var(--win98-blue-highlight));
+      color: white;
+      padding: 6px 8px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .window-body {
+      padding: 15px;
+    }
+
+    fieldset {
+      border: 2px groove var(--win98-light-gray);
+      background-color: var(--win98-gray);
+      margin-bottom: 12px;
+      padding: 12px;
+    }
+
+    legend {
+      font-weight: bold;
+      color: var(--win98-blue);
+    }
+
+    .info-box {
+      background: #ffffff;
+      border: 2px inset var(--win98-dark-gray);
+      padding: 12px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    button.win98-btn {
+      background-color: var(--win98-gray);
+      border-top: 2px solid var(--win98-white);
+      border-left: 2px solid var(--win98-white);
+      border-right: 2px solid var(--win98-dark-gray);
+      border-bottom: 2px solid var(--win98-dark-gray);
+      padding: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      font-size: 15px;
+    }
+
+    button.win98-btn:active {
+      border-top: 2px solid var(--win98-dark-gray);
+      border-left: 2px solid var(--win98-dark-gray);
+      border-right: 2px solid var(--win98-white);
+      border-bottom: 2px solid var(--win98-white);
+    }
+  </style>
+</head>
+<body>
+
+<div class="window">
+  <div class="title-bar">
+    <span>Pakisa Fuel - Manager Override</span>
+  </div>
+  <div class="window-body">
+    
+    <fieldset>
+      <legend>Voucher Review</legend>
+      <div id="voucher-details" class="info-box">
+        Loading voucher details...
+      </div>
+      <button id="approve-btn" class="win98-btn" style="background-color: #d4edda; color: #155724; display: none;" onclick="approveVoucher()">✓ APPROVE VOUCHER NOW</button>
+    </fieldset>
+
+  </div>
+</div>
+
+<script type="module">
+  import { db } from "./app.js";
+  import { collection, getDocs, query, where, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  let targetDocId = null;
+
+  async function initApprovalPage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    const detailsBox = document.getElementById("voucher-details");
+
+    if (!code) {
+      detailsBox.innerHTML = "<span style='color:red;'>Error: No voucher code provided in the link.</span>";
+      return;
+    }
+
+    try {
+      const q = query(collection(db, "fuel_vouchers"), where("code", "==", code));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        detailsBox.innerHTML = `<span style='color:red;'>Error: Voucher <b>${code}</b> not found in database.</span>`;
+        return;
+      }
+
+      const voucherDoc = snapshot.docs[0];
+      targetDocId = voucherDoc.id;
+      const data = voucherDoc.data();
+
+      detailsBox.innerHTML = `
+        <b>Code:</b> ${data.code}<br>
+        <b>Amount:</b> R${data.amountApproved}<br>
+        <b>Current Status:</b> <span style="color:${data.status === 'APPROVED' ? 'green' : 'orange'};">${data.status}</span><br>
+        <b>Flags:</b> ${data.flags ? data.flags.join(", ") : "None"}
+      `;
+
+      if (data.status === "PENDING") {
+        document.getElementById("approve-btn").style.display = "block";
+      } else {
+        detailsBox.innerHTML += `<br><br><span style="color:blue; font-weight:bold;">This voucher has already been processed.</span>`;
+      }
+
+    } catch (err) {
+      console.error(err);
+      detailsBox.innerHTML = "<span style='color:red;'>Failed to load voucher details from database.</span>";
+    }
+  }
+
+  window.approveVoucher = async function() {
+    if (!targetDocId) return;
+
+    const btn = document.getElementById("approve-btn");
+    btn.innerText = "Processing Approval...";
+    btn.disabled = true;
+
+    try {
+      await updateDoc(doc(db, "fuel_vouchers", targetDocId), {
+        status: "APPROVED"
+      });
+
+      document.getElementById("voucher-details").innerHTML += `<br><br><span style="color:green; font-weight:bold;">✓ SUCCESSFULLY APPROVED! The pump attendant can now process this voucher.</span>`;
+      btn.style.display = "none";
+    } catch (err) {
+      console.error(err);
+      alert("Approval failed. Check connection.");
+      btn.innerText = "✓ APPROVE VOUCHER NOW";
+      btn.disabled = false;
+    }
+  }
+
+  initApprovalPage();
+</script>
+
+</body>
+</html>
