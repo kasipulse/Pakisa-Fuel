@@ -88,6 +88,12 @@
       cursor: pointer;
       width: 100%;
       font-size: 15px;
+      text-align: center;
+      box-sizing: border-box;
+      display: block;
+      text-decoration: none;
+      color: black;
+      margin-top: 10px;
     }
 
     button.win98-btn:active {
@@ -112,6 +118,7 @@
         Loading voucher details...
       </div>
       <button id="approve-btn" class="win98-btn" style="background-color: #d4edda; color: #155724; display: none;" onclick="approveVoucher()">✓ APPROVE VOUCHER NOW</button>
+      <div id="next-step-container"></div>
     </fieldset>
 
   </div>
@@ -119,9 +126,12 @@
 
 <script type="module">
   import { db } from "./app.js";
-  import { collection, getDocs, query, where, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { collection, getDocs, query, where, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   let targetDocId = null;
+  let driverPhone = "";
+  let voucherCode = "";
+  let voucherAmount = "";
 
   async function initApprovalPage() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -132,6 +142,8 @@
       detailsBox.innerHTML = "<span style='color:red;'>Error: No voucher code provided in the link.</span>";
       return;
     }
+
+    voucherCode = code;
 
     try {
       const q = query(collection(db, "fuel_vouchers"), where("code", "==", code));
@@ -145,6 +157,15 @@
       const voucherDoc = snapshot.docs[0];
       targetDocId = voucherDoc.id;
       const data = voucherDoc.data();
+      voucherAmount = data.amountApproved;
+
+      // Fetch driver phone number from the drivers collection using driverId
+      if (data.driverId) {
+        const driverSnap = await getDoc(doc(db, "drivers", data.driverId));
+        if (driverSnap.exists()) {
+          driverPhone = driverSnap.data().phone || "";
+        }
+      }
 
       detailsBox.innerHTML = `
         <b>Code:</b> ${data.code}<br>
@@ -177,8 +198,23 @@
         status: "APPROVED"
       });
 
-      document.getElementById("voucher-details").innerHTML += `<br><br><span style="color:green; font-weight:bold;">✓ SUCCESSFULLY APPROVED! The pump attendant can now process this voucher.</span>`;
+      document.getElementById("voucher-details").innerHTML += `<br><br><span style="color:green; font-weight:bold;">✓ SUCCESSFULLY APPROVED!</span>`;
       btn.style.display = "none";
+
+      // Generate loopback WhatsApp link to the driver
+      const nextContainer = document.getElementById("next-step-container");
+      if (driverPhone) {
+        const driverMsg = encodeURIComponent(`✅ *PAKISA FUEL APPROVED*\n\nYour fuel voucher *${voucherCode}* (R${voucherAmount}) has been approved by management.\n\nProceed to GP Fuels to fill up.`);
+        nextContainer.innerHTML = `
+          <div style="margin-top: 15px; font-weight: bold; color: #1b365d;">Next Step:</div>
+          <a href="https://wa.me/${driverPhone}?text=${driverMsg}" target="_blank" class="win98-btn" style="background-color: #d1ecf1; color: #0c5460; text-align: center;">
+            📲 Send WhatsApp to Driver
+          </a>
+        `;
+      } else {
+        nextContainer.innerHTML = `<div style="margin-top: 10px; color: red; font-size: 12px;">Notice: No phone number found for this driver in database to auto-forward.</div>`;
+      }
+
     } catch (err) {
       console.error(err);
       alert("Approval failed. Check connection.");
