@@ -270,12 +270,14 @@
     });
 
     const outputBox = document.getElementById("code-output");
+    const managerPhone = "27658177124"; // Mpho Mahlaba
+
     if(status === "APPROVED") {
       outputBox.innerHTML = `SUCCESS!<br>PIN: <b>${code}</b><br>Status: <span class="badge-approved">APPROVED</span>`;
     } else {
       const waMessage = encodeURIComponent(`🔔 *PAKISA APPROVAL REQUIRED*\nCode: ${code}\nAmt: R${amount}\nReason: ${flags.join(", ")}`);
       outputBox.innerHTML = `FLAGGED!<br>PIN: <b>${code}</b><br>Status: <span class="badge-pending">PENDING</span><br>Reasons: ${flags.join(", ")}<br><br>
-      <a href="https://wa.me/?text=${waMessage}" target="_blank" style="color: #ffff00; text-decoration: underline; font-weight: bold;">📲 Send WhatsApp to Manager</a>`;
+      <a href="https://wa.me/${managerPhone}?text=${waMessage}" target="_blank" style="color: #ffff00; text-decoration: underline; font-weight: bold;">📲 Send WhatsApp to Mpho Mahlaba</a>`;
     }
   }
 
@@ -321,7 +323,7 @@
     }
   }
 
-  loadInitialData();
+    loadInitialData();
 </script>
 
 </body>
