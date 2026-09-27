@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Pakisa Fuel Management System - Win98 Edition</title>
   <style>
-    /* Windows 98 Retro Theme Colors & Styles */
     :root {
       --win98-gray: #c0c0c0;
       --win98-dark-gray: #808080;
@@ -17,7 +16,7 @@
     }
 
     body {
-      background-color: #008080; /* Classic Win98 Teal Desktop */
+      background-color: #008080;
       font-family: "MS Sans Serif", Arial, Tahoma, sans-serif;
       font-size: 12px;
       margin: 0;
@@ -184,13 +183,10 @@
 <body>
 
 <div>
-  <!-- Tab navigation -->
   <div class="tab-container">
     <div class="tab active" onclick="switchTab('generator')">Voucher Gen</div>
-    <div class="tab" onclick="switchTab('verifier')">GP Fuels Verify</div>
   </div>
 
-  <!-- VOUCHER GENERATOR WINDOW -->
   <div id="generator-win" class="window tab-content active">
     <div class="title-bar">
       <span>Pakisa Fuel - Voucher Generator v1.0</span>
@@ -198,7 +194,7 @@
     </div>
     <div class="window-body">
       <div class="logo-container">
-        <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1771237505/pakisa_logistics_express_pty_ltd_logo-removebg-preview_gr7h0r.png" alt="Pakisa Logo">[cite: 5]
+        <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1771237505/pakisa_logistics_express_pty_ltd_logo-removebg-preview_gr7h0r.png" alt="Pakisa Logo">
         <h2>PAKISA FUEL SYSTEMS</h2>
       </div>
 
@@ -225,68 +221,30 @@
       </fieldset>
     </div>
   </div>
-
-  <!-- GP FUELS ATTENDANT VERIFICATION WINDOW -->
-  <div id="verifier-win" class="window tab-content">
-    <div class="title-bar" style="background: linear-gradient(90deg, #800000, #ff0000);">
-      <span>GP Fuels Depot - Attendant Verification</span>
-      <div class="title-bar-controls"><button>_</button><button>X</button></div>
-    </div>
-    <div class="window-body">
-      <fieldset>
-        <legend>Verify Driver PIN at Pump</legend>
-        <div class="form-row">
-          <label>Enter Voucher PIN:</label>
-          <input type="text" id="verifyPin" placeholder="PKS-DDMM-XXXXX" style="text-transform: uppercase;">
-        </div>
-        <button class="win98-btn" onclick="verifyVoucherCode()">Verify PIN & Status</button>
-      </fieldset>
-
-      <fieldset>
-        <legend>Pump Authorization Screen</legend>
-        <div id="verify-output" class="output-box">Awaiting PIN verification...</div>
-      </fieldset>
-
-      <fieldset id="slip-upload-section" style="display:none;">
-        <legend>Upload GP Fuels Paper Slip</legend>
-        <div class="form-row">
-          <label>Snap Physical Slip:</label>
-          <input type="file" id="slipPhoto" accept="image/*" capture="environment">
-        </div>
-        <button class="win98-btn" onclick="completeRedemption()" style="background-color: #00aa00; color: white;">Submit Slip & Complete Fueling</button>
-      </fieldset>
-    </div>
-  </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  import { getFirestore, collection, addDoc, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "YOUR_KEY",
+    apiKey: "AIzaSyC-tNc4sqO0gAstGxRXAkx4CR1xG2e831o",
     authDomain: "fuel-management-system-7784c.firebaseapp.com",
-    projectId: "fuel-management-system-7784c"
+    projectId: "fuel-management-system-7784c",
+    storageBucket: "fuel-management-system-7784c.firebasestorage.app",
+    messagingSenderId: "718691738844",
+    appId: "1:718691738844:web:a590ae6d2c734ffa1f4019",
+    measurementId: "G-Q6N1PWMBDR"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  const storage = getStorage(app);
-
-  let activeVoucherDocId = null;
 
   window.switchTab = function(tabName) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    
-    if(tabName === 'generator') {
-      document.querySelectorAll('.tab')[0].classList.add('active');
-      document.getElementById('generator-win').classList.add('active');
-    } else {
-      document.querySelectorAll('.tab')[1].classList.add('active');
-      document.getElementById('verifier-win').classList.add('active');
-    }
+    document.querySelector('.tab').classList.add('active');
+    document.getElementById('generator-win').classList.add('active');
   }
 
   function generateCode() {
@@ -310,7 +268,6 @@
     const hour = now.getHours();
     const dayOfWeek = now.getDay();
 
-    // Guardrail Checks
     let status = "APPROVED";
     let flags = [];
 
@@ -329,7 +286,7 @@
 
     const code = generateCode();
 
-    const docRef = await addDoc(collection(db, "fuel_vouchers"), {
+    await addDoc(collection(db, "fuel_vouchers"), {
       code,
       driverId,
       vehicleId,
@@ -347,63 +304,6 @@
     }
   }
 
-  window.verifyVoucherCode = async function() {
-    const pin = document.getElementById("verifyPin").value.trim().toUpperCase();
-    const verifyOutput = document.getElementById("verify-output");
-    
-    if(!pin) {
-      alert("Please enter a PIN code");
-      return;
-    }
-
-    const q = query(collection(db, "fuel_vouchers"), where("code", "==", pin));
-    const snapshot = await getDocs(q);
-
-    if(snapshot.empty) {
-      verifyOutput.innerHTML = `<span style="color:red;">INVALID PIN: Voucher not found in system.</span>`;
-      document.getElementById("slip-upload-section").style.display = "none";
-      return;
-    }
-
-    const voucherDoc = snapshot.docs[0];
-    activeVoucherDocId = voucherDoc.id;
-    const data = voucherDoc.data();
-
-    if(data.status === "APPROVED") {
-      verifyOutput.innerHTML = `<span style="color:00ff00;">STATUS: VALID PUMP AUTHORIZED</span><br>Amount: R${data.amountApproved}<br>Vehicle: ${data.vehicleId}`;
-      document.getElementById("slip-upload-section").style.display = "block";
-    } else {
-      verifyOutput.innerHTML = `<span style="color:yellow;">STATUS: LOCKED / PENDING</span><br>Reason: ${data.flags.join(", ")}<br><i>Requires Super User clearance.</i>`;
-      document.getElementById("slip-upload-section").style.display = "none";
-    }
-  }
-
-  window.completeRedemption = async function() {
-    const fileInput = document.getElementById("slipPhoto");
-    if(fileInput.files.length === 0) {
-      alert("Please capture/upload the GP Fuels slip photo first!");
-      return;
-    }
-
-    const file = fileInput.files[0];
-    const storageRef = ref(storage, `slips/${activeVoucherDocId}_${Date.now()}`);
-    
-    verifyOutput.innerHTML = "Uploading slip to database...";
-    
-    await uploadBytes(storageRef, file);
-    const slipUrl = await getDownloadURL(storageRef);
-
-    await updateDoc(doc(db, "fuel_vouchers", activeVoucherDocId), {
-      status: "COMPLETED",
-      slipUrl: slipUrl,
-      redeemedAt: Timestamp.now()
-    });
-
-    alert("Fuel transaction completed and slip uploaded successfully!");
-    location.reload();
-  }
-
-  // Load dropdowns on startup
   async function loadInitialData() {
     const driversSelect = document.getElementById("driver");
     const vehiclesSelect = document.getElementById("vehicle");
