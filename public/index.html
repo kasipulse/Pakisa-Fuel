@@ -90,6 +90,7 @@
     label {
       margin-bottom: 4px;
       font-weight: bold;
+      font-size: 13px;
     }
 
     select, input {
@@ -150,6 +151,8 @@
     <div class="title-bar-controls"><button>_</button><button>X</button></div>
   </div>
   <div class="window-body">
+    
+    <!-- Voucher Generator Section -->
     <fieldset>
       <legend>Issue New Fuel Voucher</legend>
       <div class="form-row">
@@ -167,10 +170,32 @@
       <button class="win98-btn" onclick="createVoucher()">Generate Secure PIN</button>
     </fieldset>
 
+    <!-- Quick Add Register Section -->
+    <fieldset>
+      <legend>Register New Driver / Vehicle</legend>
+      <div class="form-row">
+        <label>New Driver Name:</label>
+        <input type="text" id="newDriverName" placeholder="e.g. John Doe">
+      </div>
+      <div class="form-row">
+        <label>Driver Phone (WhatsApp):</label>
+        <input type="text" id="newDriverPhone" placeholder="e.g. 27821234567">
+      </div>
+      <button class="win98-btn" style="background-color:#e0e0e0;" onclick="addNewDriver()">+ Add Driver to Database</button>
+
+      <div class="form-row" style="margin-top: 15px;">
+        <label>New Vehicle Registration:</label>
+        <input type="text" id="newVehicleReg" placeholder="e.g. MK51ZRGP" style="text-transform: uppercase;">
+      </div>
+      <button class="win98-btn" style="background-color:#e0e0e0;" onclick="addNewVehicle()">+ Add Vehicle to Database</button>
+    </fieldset>
+
+    <!-- System Output Section -->
     <fieldset>
       <legend>System Output / Action</legend>
       <div id="code-output" class="output-box">Ready for transaction entry...</div>
     </fieldset>
+
   </div>
 </div>
 
@@ -178,13 +203,37 @@
   import { db, generateCode } from "./app.js";
   import { collection, addDoc, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+  // Load Dropdown Options
+  async function loadInitialData() {
+    const driversSelect = document.getElementById("driver");
+    const vehiclesSelect = document.getElementById("vehicle");
+
+    driversSelect.innerHTML = '<option value="">-- Select Driver --</option>';
+    vehiclesSelect.innerHTML = '<option value="">-- Select Vehicle --</option>';
+
+    try {
+      const driversSnap = await getDocs(collection(db, "drivers"));
+      driversSnap.forEach(d => {
+        driversSelect.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
+      });
+
+      const vehiclesSnap = await getDocs(collection(db, "vehicles"));
+      vehiclesSnap.forEach(v => {
+        vehiclesSelect.innerHTML += `<option value="${v.id}">${v.data().registration}</option>`;
+      });
+    } catch (e) {
+      console.error("Error loading dropdowns:", e);
+    }
+  }
+
+  // Generate Voucher Logic
   window.createVoucher = async function() {
     const driverId = document.getElementById("driver").value;
     const vehicleId = document.getElementById("vehicle").value;
     const amount = Number(document.getElementById("amount").value);
 
     if(!driverId || !vehicleId || !amount) {
-      alert("Please fill in all fields!");
+      alert("Please fill in all voucher fields!");
       return;
     }
 
@@ -224,29 +273,51 @@
     if(status === "APPROVED") {
       outputBox.innerHTML = `SUCCESS!<br>PIN: <b>${code}</b><br>Status: <span class="badge-approved">APPROVED</span>`;
     } else {
-      // WhatsApp Click-to-Chat fallback generation for pending approvals
       const waMessage = encodeURIComponent(`🔔 *PAKISA APPROVAL REQUIRED*\nCode: ${code}\nAmt: R${amount}\nReason: ${flags.join(", ")}`);
       outputBox.innerHTML = `FLAGGED!<br>PIN: <b>${code}</b><br>Status: <span class="badge-pending">PENDING</span><br>Reasons: ${flags.join(", ")}<br><br>
       <a href="https://wa.me/?text=${waMessage}" target="_blank" style="color: #ffff00; text-decoration: underline; font-weight: bold;">📲 Send WhatsApp to Manager</a>`;
     }
   }
 
-  async function loadInitialData() {
-    const driversSelect = document.getElementById("driver");
-    const vehiclesSelect = document.getElementById("vehicle");
+  // Quick Add Driver Function
+  window.addNewDriver = async function() {
+    const name = document.getElementById("newDriverName").value.trim();
+    const phone = document.getElementById("newDriverPhone").value.trim();
+
+    if(!name || !phone) {
+      alert("Please enter both driver name and phone number.");
+      return;
+    }
 
     try {
-      const driversSnap = await getDocs(collection(db, "drivers"));
-      driversSnap.forEach(d => {
-        driversSelect.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
-      });
+      await addDoc(collection(db, "drivers"), { name, phone });
+      alert(`Driver "${name}" successfully added!`);
+      document.getElementById("newDriverName").value = "";
+      document.getElementById("newDriverPhone").value = "";
+      loadInitialData(); // Refresh dropdowns immediately
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add driver.");
+    }
+  }
 
-      const vehiclesSnap = await getDocs(collection(db, "vehicles"));
-      vehiclesSnap.forEach(v => {
-        vehiclesSelect.innerHTML += `<option value="${v.id}">${v.data().registration}</option>`;
-      });
-    } catch (e) {
-      console.error("Error loading dropdowns:", e);
+  // Quick Add Vehicle Function
+  window.addNewVehicle = async function() {
+    const registration = document.getElementById("newVehicleReg").value.trim().toUpperCase();
+
+    if(!registration) {
+      alert("Please enter a vehicle registration number.");
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "vehicles"), { registration });
+      alert(`Vehicle "${registration}" successfully added!`);
+      document.getElementById("newVehicleReg").value = "";
+      loadInitialData(); // Refresh dropdowns immediately
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add vehicle.");
     }
   }
 
