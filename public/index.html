@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Pakisa Fuel Management System - Win98 Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pakisa Fuel - Management</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1b365d">
   <style>
     :root {
       --win98-gray: #c0c0c0;
@@ -18,30 +21,31 @@
     body {
       background-color: #008080;
       font-family: "MS Sans Serif", Arial, Tahoma, sans-serif;
-      font-size: 12px;
+      font-size: 14px;
       margin: 0;
-      padding: 20px;
+      padding: 10px;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       min-height: 100vh;
     }
 
     .window {
       background-color: var(--win98-gray);
-      width: 500px;
+      width: 100%;
+      max-width: 480px;
       border-top: 2px solid var(--win98-white);
       border-left: 2px solid var(--win98-white);
       border-right: 2px solid var(--win98-dark-gray);
       border-bottom: 2px solid var(--win98-dark-gray);
       box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
-      margin-bottom: 20px;
+      margin-top: 10px;
     }
 
     .title-bar {
       background: linear-gradient(90deg, var(--win98-blue), var(--win98-blue-highlight));
       color: white;
-      padding: 4px 6px;
+      padding: 6px 8px;
       font-weight: bold;
       display: flex;
       justify-content: space-between;
@@ -54,34 +58,15 @@
       border-left: 1px solid var(--win98-white);
       border-right: 1px solid var(--win98-dark-gray);
       border-bottom: 1px solid var(--win98-dark-gray);
-      width: 16px;
-      height: 16px;
-      font-size: 9px;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
       font-weight: bold;
       cursor: pointer;
     }
 
     .window-body {
-      padding: 15px;
-    }
-
-    .logo-container {
-      text-align: center;
-      margin-bottom: 10px;
-      background: var(--pakisa-blue);
-      padding: 10px;
-      border: 2px inset var(--win98-dark-gray);
-    }
-
-    .logo-container img {
-      height: 40px;
-    }
-
-    .logo-container h2 {
-      color: var(--pakisa-gold);
-      margin: 5px 0 0 0;
-      font-size: 14px;
-      letter-spacing: 1px;
+      padding: 12px;
     }
 
     fieldset {
@@ -97,13 +82,13 @@
     }
 
     .form-row {
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       display: flex;
       flex-direction: column;
     }
 
     label {
-      margin-bottom: 3px;
+      margin-bottom: 4px;
       font-weight: bold;
     }
 
@@ -113,9 +98,11 @@
       border-left: 2px solid var(--win98-dark-gray);
       border-right: 2px solid var(--win98-white);
       border-bottom: 2px solid var(--win98-white);
-      padding: 4px;
+      padding: 8px;
       font-family: inherit;
-      font-size: 12px;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     button.win98-btn {
@@ -124,11 +111,12 @@
       border-left: 2px solid var(--win98-white);
       border-right: 2px solid var(--win98-dark-gray);
       border-bottom: 2px solid var(--win98-dark-gray);
-      padding: 6px 14px;
+      padding: 10px 14px;
       font-weight: bold;
       cursor: pointer;
       width: 100%;
       margin-top: 5px;
+      font-size: 14px;
     }
 
     button.win98-btn:active {
@@ -136,7 +124,6 @@
       border-left: 2px solid var(--win98-dark-gray);
       border-right: 2px solid var(--win98-white);
       border-bottom: 2px solid var(--win98-white);
-      padding: 7px 13px 5px 15px;
     }
 
     .output-box {
@@ -146,80 +133,44 @@
       padding: 10px;
       border: 2px inset var(--win98-dark-gray);
       margin-top: 10px;
-      min-height: 40px;
+      min-height: 50px;
+      font-size: 13px;
+      word-break: break-all;
     }
 
     .badge-pending { color: yellow; font-weight: bold; }
     .badge-approved { color: #00ff00; font-weight: bold; }
-
-    .tab-container {
-      display: flex;
-      margin-bottom: 5px;
-    }
-    .tab {
-      background: var(--win98-gray);
-      padding: 5px 10px;
-      border-top: 2px solid var(--win98-white);
-      border-left: 2px solid var(--win98-white);
-      border-right: 2px solid var(--win98-dark-gray);
-      cursor: pointer;
-      margin-right: 2px;
-      font-weight: bold;
-    }
-    .tab.active {
-      background: var(--win98-gray);
-      border-bottom: 2px solid var(--win98-gray);
-      position: relative;
-      top: 2px;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
   </style>
 </head>
 <body>
 
-<div>
-  <div class="tab-container">
-    <div class="tab active">Voucher Gen</div>
+<div class="window">
+  <div class="title-bar">
+    <span>Pakisa Fuel - Management v1.0</span>
+    <div class="title-bar-controls"><button>_</button><button>X</button></div>
   </div>
-
-  <div id="generator-win" class="window tab-content active">
-    <div class="title-bar">
-      <span>Pakisa Fuel - Voucher Generator v1.0</span>
-      <div class="title-bar-controls"><button>_</button><button>X</button></div>
-    </div>
-    <div class="window-body">
-      <div class="logo-container">
-        <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1771237505/pakisa_logistics_express_pty_ltd_logo-removebg-preview_gr7h0r.png" alt="Pakisa Logo">[cite: 5]
-        <h2>PAKISA FUEL SYSTEMS</h2>
+  <div class="window-body">
+    <fieldset>
+      <legend>Issue New Fuel Voucher</legend>
+      <div class="form-row">
+        <label>Select Driver:</label>
+        <select id="driver"></select>
       </div>
+      <div class="form-row">
+        <label>Select Vehicle Registration:</label>
+        <select id="vehicle"></select>
+      </div>
+      <div class="form-row">
+        <label>Amount Approved (R):</label>
+        <input type="number" id="amount" placeholder="e.g. 500">
+      </div>
+      <button class="win98-btn" onclick="createVoucher()">Generate Secure PIN</button>
+    </fieldset>
 
-      <fieldset>
-        <legend>Issue New Fuel Voucher</legend>
-        <div class="form-row">
-          <label>Select Driver:</label>
-          <select id="driver"></select>
-        </div>
-        <div class="form-row">
-          <label>Select Vehicle Registration:</label>
-          <select id="vehicle"></select>
-        </div>
-        <div class="form-row">
-          <label>Amount Approved (R):</label>
-          <input type="number" id="amount" placeholder="e.g. 500">
-        </div>
-        <button class="win98-btn" onclick="createVoucher()">Generate Secure PIN</button>
-      </fieldset>
-
-      <fieldset>
-        <legend>System Output / PIN Result</legend>
-        <div id="code-output" class="output-box">Ready for transaction entry...</div>
-      </fieldset>
-    </div>
+    <fieldset>
+      <legend>System Output / Action</legend>
+      <div id="code-output" class="output-box">Ready for transaction entry...</div>
+    </fieldset>
   </div>
 </div>
 
@@ -273,7 +224,10 @@
     if(status === "APPROVED") {
       outputBox.innerHTML = `SUCCESS!<br>PIN: <b>${code}</b><br>Status: <span class="badge-approved">APPROVED</span>`;
     } else {
-      outputBox.innerHTML = `FLAGGED!<br>PIN: <b>${code}</b><br>Status: <span class="badge-pending">PENDING SUPER USER</span><br>Reasons: ${flags.join(", ")}`;
+      // WhatsApp Click-to-Chat fallback generation for pending approvals
+      const waMessage = encodeURIComponent(`🔔 *PAKISA APPROVAL REQUIRED*\nCode: ${code}\nAmt: R${amount}\nReason: ${flags.join(", ")}`);
+      outputBox.innerHTML = `FLAGGED!<br>PIN: <b>${code}</b><br>Status: <span class="badge-pending">PENDING</span><br>Reasons: ${flags.join(", ")}<br><br>
+      <a href="https://wa.me/?text=${waMessage}" target="_blank" style="color: #ffff00; text-decoration: underline; font-weight: bold;">📲 Send WhatsApp to Manager</a>`;
     }
   }
 
@@ -281,15 +235,19 @@
     const driversSelect = document.getElementById("driver");
     const vehiclesSelect = document.getElementById("vehicle");
 
-    const driversSnap = await getDocs(collection(db, "drivers"));
-    driversSnap.forEach(d => {
-      driversSelect.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
-    });
+    try {
+      const driversSnap = await getDocs(collection(db, "drivers"));
+      driversSnap.forEach(d => {
+        driversSelect.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
+      });
 
-    const vehiclesSnap = await getDocs(collection(db, "vehicles"));
-    vehiclesSnap.forEach(v => {
-      vehiclesSelect.innerHTML += `<option value="${v.id}">${v.data().registration}</option>`;
-    });
+      const vehiclesSnap = await getDocs(collection(db, "vehicles"));
+      vehiclesSnap.forEach(v => {
+        vehiclesSelect.innerHTML += `<option value="${v.id}">${v.data().registration}</option>`;
+      });
+    } catch (e) {
+      console.error("Error loading dropdowns:", e);
+    }
   }
 
   loadInitialData();
