@@ -108,24 +108,17 @@
     .hidden {
       display: none;
     }
-
-    .flex-row {
-      display: flex;
-      gap: 10px;
-    }
   </style>
 </head>
 <body>
 
 <div class="container">
   
-  <!-- HEADER & LOGO -->
   <div class="header">
     <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1790504228/images-removebg-preview_paexe9.png" alt="Pakisa Logo">
     <h2>GP FUELS DEPOT VERIFICATION</h2>
   </div>
 
-  <!-- LOGIN SECTION (Attendant Access) -->
   <div id="login-section">
     <div class="form-group">
       <label>Attendant / Depot PIN Code:</label>
@@ -134,7 +127,6 @@
     <button class="btn" onclick="attendantLogin()">Login to Terminal</button>
   </div>
 
-  <!-- VERIFICATION DASHBOARD (Hidden until logged in) -->
   <div id="dashboard-section" class="hidden">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
       <span style="font-size: 12px; color: #28a745; font-weight: bold;">● Terminal Active</span>
@@ -154,7 +146,6 @@
       Awaiting voucher input...
     </div>
 
-    <!-- SLIP UPLOAD CONTAINER -->
     <div id="slip-section" class="hidden" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px;">
       <div class="form-group">
         <label>Capture GP Fuels Paper Slip:</label>
@@ -172,9 +163,13 @@
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
   const firebaseConfig = {
-    apiKey: "YOUR_KEY",
+    apiKey: "AIzaSyC-tNc4sqO0gAstGxRXAkx4CR1xG2e831o",
     authDomain: "fuel-management-system-7784c.firebaseapp.com",
-    projectId: "fuel-management-system-7784c"
+    projectId: "fuel-management-system-7784c",
+    storageBucket: "fuel-management-system-7784c.firebasestorage.app",
+    messagingSenderId: "718691738844",
+    appId: "1:718691738844:web:a590ae6d2c734ffa1f4019",
+    measurementId: "G-Q6N1PWMBDR"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -183,7 +178,6 @@
 
   let activeVoucherDocId = null;
 
-  // Simple hardcoded or session-based attendant login pin for the pilot (e.g. 2026)
   window.attendantLogin = function() {
     const pin = document.getElementById("attendantPin").value;
     if(pin === "2026" || pin === "GPFUELS") {
@@ -286,7 +280,6 @@
     }
   }
 
-  // Check session persistence on load
   window.onload = function() {
     if(sessionStorage.getItem("gp_logged_in") === "true") {
       document.getElementById("login-section").classList.add("hidden");
