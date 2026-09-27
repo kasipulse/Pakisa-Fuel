@@ -1,73 +1,425 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Pakisa Fuel</title>
+  <meta charset="UTF-8">
+  <title>Pakisa Fuel Management System - Win98 Edition</title>
+  <style>
+    /* Windows 98 Retro Theme Colors & Styles */
+    :root {
+      --win98-gray: #c0c0c0;
+      --win98-dark-gray: #808080;
+      --win98-light-gray: #dfdfdf;
+      --win98-blue: #000080;
+      --win98-blue-highlight: #1084d0;
+      --pakisa-blue: #1b365d;
+      --pakisa-gold: #c5a059;
+      --pakisa-white: #ffffff;
+    }
+
+    body {
+      background-color: #008080; /* Classic Win98 Teal Desktop */
+      font-family: "MS Sans Serif", Arial, Tahoma, sans-serif;
+      font-size: 12px;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .window {
+      background-color: var(--win98-gray);
+      width: 500px;
+      border-top: 2px solid var(--win98-white);
+      border-left: 2px solid var(--win98-white);
+      border-right: 2px solid var(--win98-dark-gray);
+      border-bottom: 2px solid var(--win98-dark-gray);
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+      margin-bottom: 20px;
+    }
+
+    .title-bar {
+      background: linear-gradient(90deg, var(--win98-blue), var(--win98-blue-highlight));
+      color: white;
+      padding: 4px 6px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title-bar-controls button {
+      background-color: var(--win98-gray);
+      border-top: 1px solid var(--win98-white);
+      border-left: 1px solid var(--win98-white);
+      border-right: 1px solid var(--win98-dark-gray);
+      border-bottom: 1px solid var(--win98-dark-gray);
+      width: 16px;
+      height: 16px;
+      font-size: 9px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .window-body {
+      padding: 15px;
+    }
+
+    .logo-container {
+      text-align: center;
+      margin-bottom: 10px;
+      background: var(--pakisa-blue);
+      padding: 10px;
+      border: 2px inset var(--win98-dark-gray);
+    }
+
+    .logo-container img {
+      height: 40px;
+    }
+
+    .logo-container h2 {
+      color: var(--pakisa-gold);
+      margin: 5px 0 0 0;
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+
+    fieldset {
+      border: 2px groove var(--win98-light-gray);
+      background-color: var(--win98-gray);
+      margin-bottom: 12px;
+      padding: 10px;
+    }
+
+    legend {
+      font-weight: bold;
+      color: var(--win98-blue);
+    }
+
+    .form-row {
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 3px;
+      font-weight: bold;
+    }
+
+    select, input {
+      background-color: var(--pakisa-white);
+      border-top: 2px solid var(--win98-dark-gray);
+      border-left: 2px solid var(--win98-dark-gray);
+      border-right: 2px solid var(--win98-white);
+      border-bottom: 2px solid var(--win98-white);
+      padding: 4px;
+      font-family: inherit;
+      font-size: 12px;
+    }
+
+    button.win98-btn {
+      background-color: var(--win98-gray);
+      border-top: 2px solid var(--win98-white);
+      border-left: 2px solid var(--win98-white);
+      border-right: 2px solid var(--win98-dark-gray);
+      border-bottom: 2px solid var(--win98-dark-gray);
+      padding: 6px 14px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    button.win98-btn:active {
+      border-top: 2px solid var(--win98-dark-gray);
+      border-left: 2px solid var(--win98-dark-gray);
+      border-right: 2px solid var(--win98-white);
+      border-bottom: 2px solid var(--win98-white);
+      padding: 7px 13px 5px 15px;
+    }
+
+    .output-box {
+      background: black;
+      color: #00ff00;
+      font-family: "Courier New", monospace;
+      padding: 10px;
+      border: 2px inset var(--win98-dark-gray);
+      margin-top: 10px;
+      min-height: 40px;
+    }
+
+    .badge-pending { color: yellow; font-weight: bold; }
+    .badge-approved { color: #00ff00; font-weight: bold; }
+
+    .tab-container {
+      display: flex;
+      margin-bottom: 5px;
+    }
+    .tab {
+      background: var(--win98-gray);
+      padding: 5px 10px;
+      border-top: 2px solid var(--win98-white);
+      border-left: 2px solid var(--win98-white);
+      border-right: 2px solid var(--win98-dark-gray);
+      cursor: pointer;
+      margin-right: 2px;
+      font-weight: bold;
+    }
+    .tab.active {
+      background: var(--win98-gray);
+      border-bottom: 2px solid var(--win98-gray);
+      position: relative;
+      top: 2px;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
 </head>
 <body>
 
-<h2>Fuel Voucher</h2>
+<div>
+  <!-- Tab navigation -->
+  <div class="tab-container">
+    <div class="tab active" onclick="switchTab('generator')">Voucher Gen</div>
+    <div class="tab" onclick="switchTab('verifier')">GP Fuels Verify</div>
+  </div>
 
-<select id="driver"></select>
-<select id="vehicle"></select>
-<input type="number" id="amount" placeholder="Amount">
+  <!-- VOUCHER GENERATOR WINDOW -->
+  <div id="generator-win" class="window tab-content active">
+    <div class="title-bar">
+      <span>Pakisa Fuel - Voucher Generator v1.0</span>
+      <div class="title-bar-controls"><button>_</button><button>X</button></div>
+    </div>
+    <div class="window-body">
+      <div class="logo-container">
+        <img src="https://res.cloudinary.com/dwxgkbuln/image/upload/v1771237505/pakisa_logistics_express_pty_ltd_logo-removebg-preview_gr7h0r.png" alt="Pakisa Logo">[cite: 5]
+        <h2>PAKISA FUEL SYSTEMS</h2>
+      </div>
 
-<button onclick="createVoucher()">Generate</button>
+      <fieldset>
+        <legend>Issue New Fuel Voucher</legend>
+        <div class="form-row">
+          <label>Select Driver:</label>
+          <select id="driver"></select>
+        </div>
+        <div class="form-row">
+          <label>Select Vehicle Registration:</label>
+          <select id="vehicle"></select>
+        </div>
+        <div class="form-row">
+          <label>Amount Approved (R):</label>
+          <input type="number" id="amount" placeholder="e.g. 500">
+        </div>
+        <button class="win98-btn" onclick="createVoucher()">Generate Secure PIN</button>
+      </fieldset>
 
-<h1 id="code"></h1>
+      <fieldset>
+        <legend>System Output / PIN Result</legend>
+        <div id="code-output" class="output-box">Ready for transaction entry...</div>
+      </fieldset>
+    </div>
+  </div>
+
+  <!-- GP FUELS ATTENDANT VERIFICATION WINDOW -->
+  <div id="verifier-win" class="window tab-content">
+    <div class="title-bar" style="background: linear-gradient(90deg, #800000, #ff0000);">
+      <span>GP Fuels Depot - Attendant Verification</span>
+      <div class="title-bar-controls"><button>_</button><button>X</button></div>
+    </div>
+    <div class="window-body">
+      <fieldset>
+        <legend>Verify Driver PIN at Pump</legend>
+        <div class="form-row">
+          <label>Enter Voucher PIN:</label>
+          <input type="text" id="verifyPin" placeholder="PKS-DDMM-XXXXX" style="text-transform: uppercase;">
+        </div>
+        <button class="win98-btn" onclick="verifyVoucherCode()">Verify PIN & Status</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Pump Authorization Screen</legend>
+        <div id="verify-output" class="output-box">Awaiting PIN verification...</div>
+      </fieldset>
+
+      <fieldset id="slip-upload-section" style="display:none;">
+        <legend>Upload GP Fuels Paper Slip</legend>
+        <div class="form-row">
+          <label>Snap Physical Slip:</label>
+          <input type="file" id="slipPhoto" accept="image/*" capture="environment">
+        </div>
+        <button class="win98-btn" onclick="completeRedemption()" style="background-color: #00aa00; color: white;">Submit Slip & Complete Fueling</button>
+      </fieldset>
+    </div>
+  </div>
+</div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "fuel-management-system-7784c"
-};
+  const firebaseConfig = {
+    apiKey: "YOUR_KEY",
+    authDomain: "fuel-management-system-7784c.firebaseapp.com",
+    projectId: "fuel-management-system-7784c"
+  };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
 
-function generateCode() {
-  const d = new Date();
-  const day = String(d.getDate()).padStart(2,'0');
-  const month = String(d.getMonth()+1).padStart(2,'0');
-  return `PKS-${day}${month}-${Math.floor(Math.random()*90000+10000)}`;
-}
+  let activeVoucherDocId = null;
 
-window.createVoucher = async function() {
-  const driverId = document.getElementById("driver").value;
-  const vehicleId = document.getElementById("vehicle").value;
-  const amount = Number(document.getElementById("amount").value);
+  window.switchTab = function(tabName) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    if(tabName === 'generator') {
+      document.querySelectorAll('.tab')[0].classList.add('active');
+      document.getElementById('generator-win').classList.add('active');
+    } else {
+      document.querySelectorAll('.tab')[1].classList.add('active');
+      document.getElementById('verifier-win').classList.add('active');
+    }
+  }
 
-  const code = generateCode();
+  function generateCode() {
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2,'0');
+    const month = String(d.getMonth()+1).padStart(2,'0');
+    return `PKS-${day}${month}-${Math.floor(Math.random()*90000+10000)}`;
+  }
 
-  await addDoc(collection(db, "fuel_vouchers"), {
-    code,
-    driverId,
-    vehicleId,
-    amountApproved: amount,
-    status: "PENDING",
-    createdAt: Timestamp.now()
-  });
+  window.createVoucher = async function() {
+    const driverId = document.getElementById("driver").value;
+    const vehicleId = document.getElementById("vehicle").value;
+    const amount = Number(document.getElementById("amount").value);
 
-  document.getElementById("code").innerText = code;
-}
+    if(!driverId || !vehicleId || !amount) {
+      alert("Please fill in all fields!");
+      return;
+    }
 
-// load drivers + vehicles
-async function load() {
-  const drivers = await getDocs(collection(db,"drivers"));
-  drivers.forEach(d=>{
-    driver.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
-  });
+    const now = new Date();
+    const hour = now.getHours();
+    const dayOfWeek = now.getDay();
 
-  const vehicles = await getDocs(collection(db,"vehicles"));
-  vehicles.forEach(v=>{
-    vehicle.innerHTML += `<option value="${v.id}">${v.data().registration}</option>`;
-  });
-}
+    // Guardrail Checks
+    let status = "APPROVED";
+    let flags = [];
 
-load();
+    if (amount > 600) {
+      status = "PENDING";
+      flags.push("Amount > R600");
+    }
+    if (hour >= 18 || hour < 6) {
+      status = "PENDING";
+      flags.push("After Hours (Post 18:00)");
+    }
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      status = "PENDING";
+      flags.push("Weekend Transaction");
+    }
+
+    const code = generateCode();
+
+    const docRef = await addDoc(collection(db, "fuel_vouchers"), {
+      code,
+      driverId,
+      vehicleId,
+      amountApproved: amount,
+      status,
+      flags,
+      createdAt: Timestamp.now()
+    });
+
+    const outputBox = document.getElementById("code-output");
+    if(status === "APPROVED") {
+      outputBox.innerHTML = `SUCCESS!<br>PIN: <b>${code}</b><br>Status: <span class="badge-approved">APPROVED</span>`;
+    } else {
+      outputBox.innerHTML = `FLAGGED!<br>PIN: <b>${code}</b><br>Status: <span class="badge-pending">PENDING SUPER USER</span><br>Reasons: ${flags.join(", ")}`;
+    }
+  }
+
+  window.verifyVoucherCode = async function() {
+    const pin = document.getElementById("verifyPin").value.trim().toUpperCase();
+    const verifyOutput = document.getElementById("verify-output");
+    
+    if(!pin) {
+      alert("Please enter a PIN code");
+      return;
+    }
+
+    const q = query(collection(db, "fuel_vouchers"), where("code", "==", pin));
+    const snapshot = await getDocs(q);
+
+    if(snapshot.empty) {
+      verifyOutput.innerHTML = `<span style="color:red;">INVALID PIN: Voucher not found in system.</span>`;
+      document.getElementById("slip-upload-section").style.display = "none";
+      return;
+    }
+
+    const voucherDoc = snapshot.docs[0];
+    activeVoucherDocId = voucherDoc.id;
+    const data = voucherDoc.data();
+
+    if(data.status === "APPROVED") {
+      verifyOutput.innerHTML = `<span style="color:00ff00;">STATUS: VALID PUMP AUTHORIZED</span><br>Amount: R${data.amountApproved}<br>Vehicle: ${data.vehicleId}`;
+      document.getElementById("slip-upload-section").style.display = "block";
+    } else {
+      verifyOutput.innerHTML = `<span style="color:yellow;">STATUS: LOCKED / PENDING</span><br>Reason: ${data.flags.join(", ")}<br><i>Requires Super User clearance.</i>`;
+      document.getElementById("slip-upload-section").style.display = "none";
+    }
+  }
+
+  window.completeRedemption = async function() {
+    const fileInput = document.getElementById("slipPhoto");
+    if(fileInput.files.length === 0) {
+      alert("Please capture/upload the GP Fuels slip photo first!");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const storageRef = ref(storage, `slips/${activeVoucherDocId}_${Date.now()}`);
+    
+    verifyOutput.innerHTML = "Uploading slip to database...";
+    
+    await uploadBytes(storageRef, file);
+    const slipUrl = await getDownloadURL(storageRef);
+
+    await updateDoc(doc(db, "fuel_vouchers", activeVoucherDocId), {
+      status: "COMPLETED",
+      slipUrl: slipUrl,
+      redeemedAt: Timestamp.now()
+    });
+
+    alert("Fuel transaction completed and slip uploaded successfully!");
+    location.reload();
+  }
+
+  // Load dropdowns on startup
+  async function loadInitialData() {
+    const driversSelect = document.getElementById("driver");
+    const vehiclesSelect = document.getElementById("vehicle");
+
+    const driversSnap = await getDocs(collection(db, "drivers"));
+    driversSnap.forEach(d => {
+      driversSelect.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
+    });
+
+    const vehiclesSnap = await getDocs(collection(db, "vehicles"));
+    vehiclesSnap.forEach(v => {
+      vehiclesSelect.innerHTML += `<option value="${v.id}">${v.data().registration}</option>`;
+    });
+  }
+
+  loadInitialData();
 </script>
 
 </body>
