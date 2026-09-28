@@ -365,7 +365,7 @@
       const approvalUrl = `https://pakisa-fuel.onrender.com/approve.html?code=${code}`;
       const waMessage = encodeURIComponent(`🔔 *PAKISA APPROVAL REQUIRED*\nCode: ${code}\nAmt: R${amount}\nReason: ${flags.join(", ")}\n\nTap to review & approve:\n${approvalUrl}`);
       
-      // Native button with explicit onclick handler to prevent browser blocking
+      // Native button embedded directly in the output box with onclick action
       outputBox.innerHTML = `
         FLAGGED!<br>PIN: <b>${code}</b><br>
         Status: <span class="badge-pending">PENDING</span><br>
