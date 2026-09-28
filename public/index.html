@@ -251,7 +251,7 @@
 
 <script type="module">
   import { db, generateCode } from "./app.js";
-  import { collection, addDoc, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { collection, addDoc, getDocs, getDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   // Load Dropdowns & Calculate Totals
   async function loadInitialData() {
@@ -264,7 +264,7 @@
     try {
       const driversSnap = await getDocs(collection(db, "drivers"));
       driversSnap.forEach(d => {
-        driversSelect.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
+        driversSelect.innerHTML += `<option value="${d.id}" data-phone="${d.data().phone || ''}">${d.data().name}</option>`;
       });
 
       const vehiclesSnap = await getDocs(collection(db, "vehicles"));
@@ -314,7 +314,8 @@
 
   // Generate Voucher Logic
   window.createVoucher = async function() {
-    const driverId = document.getElementById("driver").value;
+    const driverSelect = document.getElementById("driver");
+    const driverId = driverSelect.value;
     const vehicleId = document.getElementById("vehicle").value;
     const amount = Number(document.getElementById("amount").value);
 
@@ -322,6 +323,9 @@
       alert("Please fill in all voucher fields!");
       return;
     }
+
+    const selectedOption = driverSelect.options[driverSelect.selectedIndex];
+    let driverPhone = selectedOption.getAttribute("data-phone") || "";
 
     const now = new Date();
     const hour = now.getHours();
@@ -359,13 +363,22 @@
     const managerPhone = "27658177124"; // Mpho Mahlaba
 
     if(status === "APPROVED") {
-      outputBox.innerHTML = `SUCCESS!<br>PIN: <b>${code}</b><br>Status: <span class="badge-approved">APPROVED</span>`;
+      const driverMsg = encodeURIComponent(`✅ *PAKISA FUEL APPROVED*\n\nPIN: *${code}*\nAmount: *R${amount}*\n\nYour voucher has been approved. Proceed to GP Fuels to fill up.`);
+      const cleanDriverPhone = driverPhone.replace(/\D/g, '');
+
+      outputBox.innerHTML = `
+        SUCCESS!<br>PIN: <b>${code}</b><br>
+        Status: <span class="badge-approved">APPROVED</span><br><br>
+        ${cleanDriverPhone ? `
+        <button class="win98-btn" style="background-color: #00ff00; color: black; font-weight: bold; text-align: center; cursor: pointer;" onclick="window.open('https://wa.me/${cleanDriverPhone}?text=${driverMsg}', '_blank')">
+          📲 SEND APPROVAL TO DRIVER
+        </button>` : '<span style="color:yellow;">Approved, but no phone number found for this driver.</span>'}
+      `;
       loadInitialData();
     } else {
       const approvalUrl = `https://pakisa-fuel.onrender.com/approve.html?code=${code}`;
       const waMessage = encodeURIComponent(`🔔 *PAKISA APPROVAL REQUIRED*\nCode: ${code}\nAmt: R${amount}\nReason: ${flags.join(", ")}\n\nTap to review & approve:\n${approvalUrl}`);
       
-      // Native button embedded directly in the output box with onclick action
       outputBox.innerHTML = `
         FLAGGED!<br>PIN: <b>${code}</b><br>
         Status: <span class="badge-pending">PENDING</span><br>
