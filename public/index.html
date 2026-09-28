@@ -281,7 +281,6 @@
       const now = new Date();
       const todayStr = now.toDateString();
       
-      // Start of week (Sunday/Monday) calculation
       const startOfWeek = new Date(now);
       startOfWeek.setDate(now.getDate() - now.getDay());
       startOfWeek.setHours(0,0,0,0);
@@ -292,15 +291,12 @@
           const vDate = data.createdAt.toDate();
           const amount = Number(data.amountApproved) || 0;
 
-          // Monthly
           if (vDate.getMonth() === now.getMonth() && vDate.getFullYear() === now.getFullYear()) {
             monthlyTotal += amount;
           }
-          // Weekly
           if (vDate >= startOfWeek) {
             weeklyTotal += amount;
           }
-          // Daily
           if (vDate.toDateString() === todayStr) {
             dailyTotal += amount;
           }
@@ -364,19 +360,19 @@
 
     if(status === "APPROVED") {
       outputBox.innerHTML = `SUCCESS!<br>PIN: <b>${code}</b><br>Status: <span class="badge-approved">APPROVED</span>`;
-      loadInitialData(); // Refresh totals
+      loadInitialData();
     } else {
       const approvalUrl = `https://pakisa-fuel.onrender.com/approve.html?code=${code}`;
       const waMessage = encodeURIComponent(`🔔 *PAKISA APPROVAL REQUIRED*\nCode: ${code}\nAmt: R${amount}\nReason: ${flags.join(", ")}\n\nTap to review & approve:\n${approvalUrl}`);
       
-      // By wrapping the entire action inside a styled button/link, the user's manual click guarantees WhatsApp opens cleanly without browser blocks
+      // Native button with explicit onclick handler to prevent browser blocking
       outputBox.innerHTML = `
         FLAGGED!<br>PIN: <b>${code}</b><br>
         Status: <span class="badge-pending">PENDING</span><br>
         Reasons: ${flags.join(", ")}<br><br>
-        <a href="https://wa.me/${managerPhone}?text=${waMessage}" target="_blank" style="display: block; background: #00ff00; color: black; text-align: center; padding: 8px; font-weight: bold; text-decoration: none; border: 2px outset #ffffff;">
-          📲 CLICK HERE TO SEND WHATSAPP TO MPHO
-        </a>
+        <button class="win98-btn" style="background-color: #00ff00; color: black; font-weight: bold; text-align: center; cursor: pointer;" onclick="window.open('https://wa.me/${managerPhone}?text=${waMessage}', '_blank')">
+          📲 CLICK TO OPEN WHATSAPP CHAT
+        </button>
       `;
     }
   }
