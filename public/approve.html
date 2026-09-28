@@ -202,7 +202,11 @@
 
       const nextContainer = document.getElementById("next-step-container");
       if (driverPhone) {
-        const cleanPhone = driverPhone.replace(/\D/g, ''); // Strips any unexpected symbols just in case
+        let cleanPhone = driverPhone.replace(/\D/g, '');
+        if (cleanPhone.startsWith('0')) {
+          cleanPhone = '27' + cleanPhone.substring(1);
+        }
+
         const driverMsg = encodeURIComponent(`✅ *PAKISA FUEL APPROVED*\n\nYour fuel voucher *${voucherCode}* (R${voucherAmount}) has been approved by management.\n\nProceed to GP Fuels to fill up.`);
         nextContainer.innerHTML = `
           <div style="margin-top: 15px; font-weight: bold; color: #1b365d;">Next Step:</div>
