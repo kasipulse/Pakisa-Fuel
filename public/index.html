@@ -81,6 +81,13 @@
       color: var(--win98-blue);
     }
 
+    details summary {
+      font-weight: bold;
+      color: var(--win98-blue);
+      cursor: pointer;
+      padding: 4px;
+    }
+
     .form-row {
       margin-bottom: 10px;
       display: flex;
@@ -152,7 +159,7 @@
   </div>
   <div class="window-body">
     
-    <!-- Voucher Generator Section -->
+    <!-- Voucher Generator Section (Top & Prioritized) -->
     <fieldset>
       <legend>Issue New Fuel Voucher</legend>
       <div class="form-row">
@@ -170,30 +177,34 @@
       <button class="win98-btn" onclick="createVoucher()">Generate Secure PIN</button>
     </fieldset>
 
-    <!-- Quick Add Register Section -->
-    <fieldset>
-      <legend>Register New Driver / Vehicle</legend>
-      <div class="form-row">
-        <label>New Driver Name:</label>
-        <input type="text" id="newDriverName" placeholder="e.g. John Doe">
-      </div>
-      <div class="form-row">
-        <label>Driver Phone (WhatsApp):</label>
-        <input type="text" id="newDriverPhone" placeholder="e.g. 27821234567">
-      </div>
-      <button class="win98-btn" style="background-color:#e0e0e0;" onclick="addNewDriver()">+ Add Driver to Database</button>
-
-      <div class="form-row" style="margin-top: 15px;">
-        <label>New Vehicle Registration:</label>
-        <input type="text" id="newVehicleReg" placeholder="e.g. MK51ZRGP" style="text-transform: uppercase;">
-      </div>
-      <button class="win98-btn" style="background-color:#e0e0e0;" onclick="addNewVehicle()">+ Add Vehicle to Database</button>
-    </fieldset>
-
     <!-- System Output Section -->
     <fieldset>
       <legend>System Output / Action</legend>
       <div id="code-output" class="output-box">Ready for transaction entry...</div>
+    </fieldset>
+
+    <!-- Minimized / Collapsible Quick Add Register Section -->
+    <fieldset>
+      <details>
+        <summary>Register New Driver / Vehicle (+)</summary>
+        <div style="margin-top: 10px;">
+          <div class="form-row">
+            <label>New Driver Name:</label>
+            <input type="text" id="newDriverName" placeholder="e.g. John Doe">
+          </div>
+          <div class="form-row">
+            <label>Driver Phone (WhatsApp):</label>
+            <input type="text" id="newDriverPhone" placeholder="e.g. 27821234567">
+          </div>
+          <button class="win98-btn" style="background-color:#e0e0e0;" onclick="addNewDriver()">+ Add Driver to Database</button>
+
+          <div class="form-row" style="margin-top: 15px;">
+            <label>New Vehicle Registration:</label>
+            <input type="text" id="newVehicleReg" placeholder="e.g. MK51ZRGP" style="text-transform: uppercase;">
+          </div>
+          <button class="win98-btn" style="background-color:#e0e0e0;" onclick="addNewVehicle()">+ Add Vehicle to Database</button>
+        </div>
+      </details>
     </fieldset>
 
   </div>
@@ -219,6 +230,7 @@
 
       const vehiclesSnap = await getDocs(collection(db, "vehicles"));
       vehiclesSnap.forEach(v => {
+        vehiclesSnap.forEach(v => {});
         vehiclesSelect.innerHTML += `<option value="${v.id}">${v.data().registration}</option>`;
       });
     } catch (e) {
@@ -277,8 +289,12 @@
     } else {
       const approvalUrl = `https://pakisa-fuel.onrender.com/approve.html?code=${code}`;
       const waMessage = encodeURIComponent(`🔔 *PAKISA APPROVAL REQUIRED*\nCode: ${code}\nAmt: R${amount}\nReason: ${flags.join(", ")}\n\nTap to review & approve:\n${approvalUrl}`);
+      
       outputBox.innerHTML = `FLAGGED!<br>PIN: <b>${code}</b><br>Status: <span class="badge-pending">PENDING</span><br>Reasons: ${flags.join(", ")}<br><br>
-      <a href="https://wa.me/${managerPhone}?text=${waMessage}" target="_blank" style="color: #ffff00; text-decoration: underline; font-weight: bold;">📲 Send WhatsApp to Mpho Mahlaba</a>`;
+      <a href="https://wa.me/${managerPhone}?text=${waMessage}" target="_blank" style="color: #ffff00; text-decoration: underline; font-weight: bold;">📲 Tap to Send WhatsApp to Mpho</a>`;
+      
+      // Automatically attempt to trigger the WhatsApp window open on mobile/desktop
+      window.open(`https://wa.me/${managerPhone}?text=${waMessage}`, '_blank');
     }
   }
 
@@ -297,7 +313,7 @@
       alert(`Driver "${name}" successfully added!`);
       document.getElementById("newDriverName").value = "";
       document.getElementById("newDriverPhone").value = "";
-      loadInitialData(); // Refresh dropdowns immediately
+      loadInitialData();
     } catch (err) {
       console.error(err);
       alert("Failed to add driver.");
@@ -317,7 +333,7 @@
       await addDoc(collection(db, "vehicles"), { registration });
       alert(`Vehicle "${registration}" successfully added!`);
       document.getElementById("newVehicleReg").value = "";
-      loadInitialData(); // Refresh dropdowns immediately
+      loadInitialData();
     } catch (err) {
       console.error(err);
       alert("Failed to add vehicle.");
