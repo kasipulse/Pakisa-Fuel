@@ -159,7 +159,6 @@
       const data = voucherDoc.data();
       voucherAmount = data.amountApproved;
 
-      // Fetch driver phone number from the drivers collection using driverId
       if (data.driverId) {
         const driverSnap = await getDoc(doc(db, "drivers", data.driverId));
         if (driverSnap.exists()) {
@@ -201,13 +200,13 @@
       document.getElementById("voucher-details").innerHTML += `<br><br><span style="color:green; font-weight:bold;">✓ SUCCESSFULLY APPROVED!</span>`;
       btn.style.display = "none";
 
-      // Generate loopback WhatsApp link to the driver
       const nextContainer = document.getElementById("next-step-container");
       if (driverPhone) {
+        const cleanPhone = driverPhone.replace(/\D/g, ''); // Strips any unexpected symbols just in case
         const driverMsg = encodeURIComponent(`✅ *PAKISA FUEL APPROVED*\n\nYour fuel voucher *${voucherCode}* (R${voucherAmount}) has been approved by management.\n\nProceed to GP Fuels to fill up.`);
         nextContainer.innerHTML = `
           <div style="margin-top: 15px; font-weight: bold; color: #1b365d;">Next Step:</div>
-          <a href="https://wa.me/${driverPhone}?text=${driverMsg}" target="_blank" class="win98-btn" style="background-color: #d1ecf1; color: #0c5460; text-align: center;">
+          <a href="https://wa.me/${cleanPhone}?text=${driverMsg}" target="_blank" class="win98-btn" style="background-color: #d1ecf1; color: #0c5460; text-align: center;">
             📲 Send WhatsApp to Driver
           </a>
         `;
