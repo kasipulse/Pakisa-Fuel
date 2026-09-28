@@ -146,6 +146,26 @@
       word-break: break-all;
     }
 
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+
+    .stat-box {
+      background: white;
+      border: 2px inset var(--win98-dark-gray);
+      padding: 6px;
+    }
+
+    .stat-val {
+      font-weight: bold;
+      color: var(--pakisa-blue);
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
     .badge-pending { color: yellow; font-weight: bold; }
     .badge-approved { color: #00ff00; font-weight: bold; }
   </style>
@@ -159,7 +179,26 @@
   </div>
   <div class="window-body">
     
-    <!-- Voucher Generator Section (Top & Prioritized) -->
+    <!-- Fuel Usage Totals Dashboard -->
+    <fieldset>
+      <legend>Fuel Spend Analytics</legend>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div style="font-size:11px; font-weight:bold;">Today</div>
+          <div id="stat-daily" class="stat-val">R0</div>
+        </div>
+        <div class="stat-box">
+          <div style="font-size:11px; font-weight:bold;">This Week</div>
+          <div id="stat-weekly" class="stat-val">R0</div>
+        </div>
+        <div class="stat-box">
+          <div style="font-size:11px; font-weight:bold;">This Month</div>
+          <div id="stat-monthly" class="stat-val">R0</div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Voucher Generator Section -->
     <fieldset>
       <legend>Issue New Fuel Voucher</legend>
       <div class="form-row">
@@ -183,7 +222,7 @@
       <div id="code-output" class="output-box">Ready for transaction entry...</div>
     </fieldset>
 
-    <!-- Minimized / Collapsible Quick Add Register Section -->
+    <!-- Minimized Register Section -->
     <fieldset>
       <details>
         <summary>Register New Driver / Vehicle (+)</summary>
@@ -214,7 +253,7 @@
   import { db, generateCode } from "./app.js";
   import { collection, addDoc, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  // Load Dropdown Options
+  // Load Dropdowns & Calculate Totals
   async function loadInitialData() {
     const driversSelect = document.getElementById("driver");
     const vehiclesSelect = document.getElementById("vehicle");
@@ -230,11 +269,50 @@
 
       const vehiclesSnap = await getDocs(collection(db, "vehicles"));
       vehiclesSnap.forEach(v => {
-        vehiclesSnap.forEach(v => {});
         vehiclesSelect.innerHTML += `<option value="${v.id}">${v.data().registration}</option>`;
       });
+
+      // Calculate Fuel Stats
+      const vouchersSnap = await getDocs(collection(db, "fuel_vouchers"));
+      let dailyTotal = 0;
+      let weeklyTotal = 0;
+      let monthlyTotal = 0;
+
+      const now = new Date();
+      const todayStr = now.toDateString();
+      
+      // Start of week (Sunday/Monday) calculation
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0,0,0,0);
+
+      vouchersSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.createdAt && data.status === "APPROVED") {
+          const vDate = data.createdAt.toDate();
+          const amount = Number(data.amountApproved) || 0;
+
+          // Monthly
+          if (vDate.getMonth() === now.getMonth() && vDate.getFullYear() === now.getFullYear()) {
+            monthlyTotal += amount;
+          }
+          // Weekly
+          if (vDate >= startOfWeek) {
+            weeklyTotal += amount;
+          }
+          // Daily
+          if (vDate.toDateString() === todayStr) {
+            dailyTotal += amount;
+          }
+        }
+      });
+
+      document.getElementById("stat-daily").innerText = `R${dailyTotal}`;
+      document.getElementById("stat-weekly").innerText = `R${weeklyTotal}`;
+      document.getElementById("stat-monthly").innerText = `R${monthlyTotal}`;
+
     } catch (e) {
-      console.error("Error loading dropdowns:", e);
+      console.error("Error loading data:", e);
     }
   }
 
@@ -286,15 +364,20 @@
 
     if(status === "APPROVED") {
       outputBox.innerHTML = `SUCCESS!<br>PIN: <b>${code}</b><br>Status: <span class="badge-approved">APPROVED</span>`;
+      loadInitialData(); // Refresh totals
     } else {
       const approvalUrl = `https://pakisa-fuel.onrender.com/approve.html?code=${code}`;
       const waMessage = encodeURIComponent(`🔔 *PAKISA APPROVAL REQUIRED*\nCode: ${code}\nAmt: R${amount}\nReason: ${flags.join(", ")}\n\nTap to review & approve:\n${approvalUrl}`);
       
-      outputBox.innerHTML = `FLAGGED!<br>PIN: <b>${code}</b><br>Status: <span class="badge-pending">PENDING</span><br>Reasons: ${flags.join(", ")}<br><br>
-      <a href="https://wa.me/${managerPhone}?text=${waMessage}" target="_blank" style="color: #ffff00; text-decoration: underline; font-weight: bold;">📲 Tap to Send WhatsApp to Mpho</a>`;
-      
-      // Automatically attempt to trigger the WhatsApp window open on mobile/desktop
-      window.open(`https://wa.me/${managerPhone}?text=${waMessage}`, '_blank');
+      // By wrapping the entire action inside a styled button/link, the user's manual click guarantees WhatsApp opens cleanly without browser blocks
+      outputBox.innerHTML = `
+        FLAGGED!<br>PIN: <b>${code}</b><br>
+        Status: <span class="badge-pending">PENDING</span><br>
+        Reasons: ${flags.join(", ")}<br><br>
+        <a href="https://wa.me/${managerPhone}?text=${waMessage}" target="_blank" style="display: block; background: #00ff00; color: black; text-align: center; padding: 8px; font-weight: bold; text-decoration: none; border: 2px outset #ffffff;">
+          📲 CLICK HERE TO SEND WHATSAPP TO MPHO
+        </a>
+      `;
     }
   }
 
