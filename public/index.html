@@ -364,7 +364,10 @@
 
     if(status === "APPROVED") {
       const driverMsg = encodeURIComponent(`✅ *PAKISA FUEL APPROVED*\n\nPIN: *${code}*\nAmount: *R${amount}*\n\nYour voucher has been approved. Proceed to GP Fuels to fill up.`);
-      const cleanDriverPhone = driverPhone.replace(/\D/g, '');
+      let cleanDriverPhone = driverPhone.replace(/\D/g, '');
+      if (cleanDriverPhone.startsWith('0')) {
+        cleanDriverPhone = '27' + cleanDriverPhone.substring(1);
+      }
 
       outputBox.innerHTML = `
         SUCCESS!<br>PIN: <b>${code}</b><br>
@@ -379,11 +382,16 @@
       const approvalUrl = `https://pakisa-fuel.onrender.com/approve.html?code=${code}`;
       const waMessage = encodeURIComponent(`🔔 *PAKISA APPROVAL REQUIRED*\nCode: ${code}\nAmt: R${amount}\nReason: ${flags.join(", ")}\n\nTap to review & approve:\n${approvalUrl}`);
       
+      let cleanManagerPhone = managerPhone.replace(/\D/g, '');
+      if (cleanManagerPhone.startsWith('0')) {
+        cleanManagerPhone = '27' + cleanManagerPhone.substring(1);
+      }
+
       outputBox.innerHTML = `
         FLAGGED!<br>PIN: <b>${code}</b><br>
         Status: <span class="badge-pending">PENDING</span><br>
         Reasons: ${flags.join(", ")}<br><br>
-        <button class="win98-btn" style="background-color: #00ff00; color: black; font-weight: bold; text-align: center; cursor: pointer;" onclick="window.open('https://wa.me/${managerPhone}?text=${waMessage}', '_blank')">
+        <button class="win98-btn" style="background-color: #00ff00; color: black; font-weight: bold; text-align: center; cursor: pointer;" onclick="window.open('https://wa.me/${cleanManagerPhone}?text=${waMessage}', '_blank')">
           📲 CLICK TO OPEN WHATSAPP CHAT
         </button>
       `;
@@ -417,7 +425,7 @@
     const registration = document.getElementById("newVehicleReg").value.trim().toUpperCase();
 
     if(!registration) {
-      alert("Please enter a vehicle registration number.");
+      alert("Please update a vehicle registration number.");
       return;
     }
 
